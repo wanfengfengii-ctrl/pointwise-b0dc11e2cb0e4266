@@ -107,6 +107,23 @@ class AttemptBook:
             AttemptState.HANDED_OFF, AttemptState.RETRY,
         ):
             raise ValueError('publication requires the current eligible handoff')
+        return self._settle_publication(attempt, state, result_id, reason)
+
+    def record_split_publication(
+        self, order_id: str, attempt_id: str, state: AttemptState, *,
+        result_id: str | None = None, reason: str | None = None,
+    ) -> CaptureAttempt:
+        attempt = self._orders[order_id]
+        if attempt.attempt_id != attempt_id or attempt.state not in (
+            AttemptState.FRAME_READY, AttemptState.RETRY,
+        ):
+            raise ValueError('split publication requires both received blocks')
+        return self._settle_publication(attempt, state, result_id, reason)
+
+    def _settle_publication(
+        self, attempt: CaptureAttempt, state: AttemptState,
+        result_id: str | None, reason: str | None,
+    ) -> CaptureAttempt:
         if state not in (AttemptState.PUBLISHED, AttemptState.RETRY, AttemptState.REJECTED):
             raise ValueError('unknown publication feedback')
         if (state is AttemptState.PUBLISHED) != (result_id is not None):

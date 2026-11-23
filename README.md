@@ -11,7 +11,9 @@ python3 -B check_project.py
 python3 -B demo.py --temporary
 ```
 
-第一条命令由控制台提供入口并运行 `tests` 下的完整回归。也可直接运行 `python3 -B -m unittest discover -s tests -t .`。演示重放 `recording.json`，在临时库中运行并清理。传 `--database PATH` 可在一个尚不存在的路径保留演示档案。相同初始数据和录制事件得到相同的档案号、首执和业务结果。
+第一条命令由控制台提供入口并运行 `tests` 下的完整回归，再运行双块录制的业务断言。也可直接运行 `python3 -B -m unittest discover -s tests -t .`。演示重放 `recording.json`，在临时库中运行并清理。传 `--database PATH` 可在一个尚不存在的路径保留演示档案。相同初始数据和录制事件得到相同的档案号、首执和业务结果。
+
+双块模式见 `BLOCK_CAPTURE.md`：以 `RecordingCamera(pages=PageRig(block_size))` 启用，`python3 -B block_recording.py verify` 核验交错读窗、错绑、撤拍与提交失败，`python3 -B block_recording.py demo` 展示停源领取。
 
 ## 一班的工作
 

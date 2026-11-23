@@ -194,6 +194,47 @@ def run_withdrawal(path, readings):
         expect([entry.order_id for entry in station.list("split").entries], ["A", "R", "C"])
 
 
+def run_contention(path):
+    with ShiftCaptureSession(path, RecordingCamera(pages=PageRig(1))) as station:
+        register(station, ("A", "B", "R", "C"))
+        dispatch(station, "A", "left")
+        write(station, "A", (11, 14))
+        take(station, "A", 0)
+        b = dispatch(station, "B", "left")
+        expect(b.state, AttemptState.IN_FLIGHT)
+        write(station, "B", (20, 24))
+        dispatch(station, "R", "right")
+        write(station, "R", (30, 34))
+        take(station, "R", 0)
+        dispatch(station, "C", "right", AttemptState.WAITING)
+        take(station, "A", 1)
+        c = dispatch(station, "C", "right")
+        expect(c.state, AttemptState.IN_FLIGHT)
+        write(station, "C", (40, 44))
+        take(station, "R", 1)
+        take(station, "B", 0)
+        take(station, "B", 1)
+        take(station, "C", 0)
+        take(station, "C", 1)
+        expect(station.publish("A").quality.readings, (11, 14))
+        expect(station.publish("B").quality.readings, (20, 24))
+        expect(station.publish("R").quality.readings, (30, 34))
+        expect(station.publish("C").quality.readings, (40, 44))
+
+
+def verify_all(root):
+    verify_fixture()
+    run_capture(root / "new-first.sqlite", "B")
+    run_capture(root / "old-first.sqlite", "A")
+    run_withdrawal(root / "late-write.sqlite", (20, 24))
+    run_withdrawal(root / "no-write.sqlite", None)
+    run_contention(root / "contention.sqlite")
+
+
+def demo_all(root):
+    run_capture(root / "split-demo.sqlite", "B")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Replay split reads and overlapping writes.")
     parser.add_argument("mode", choices=("fixture", "verify", "demo"))
@@ -203,11 +244,10 @@ def main():
         return
     with TemporaryDirectory() as folder:
         root = Path(folder)
-        run_capture(root / "new-first.sqlite", "B")
         if mode == "verify":
-            run_capture(root / "old-first.sqlite", "A")
-            run_withdrawal(root / "late-write.sqlite", (20, 24))
-            run_withdrawal(root / "no-write.sqlite", None)
+            verify_all(root)
+        else:
+            demo_all(root)
 
 
 if __name__ == "__main__":

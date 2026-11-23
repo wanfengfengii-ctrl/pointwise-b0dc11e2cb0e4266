@@ -38,10 +38,19 @@ class DispatchQueue:
             raise KeyError(event.order_id)
         if event.target not in camera.targets():
             raise KeyError(event.target)
-        if event.order_id not in self._pending or not self._claims.available(event.target):
+        dual = camera.block_size is not None
+        if dual and attempt.order.spec.point_count != 2 * camera.block_size:
+            raise ValueError('dual-block dispatch needs exactly two blocks of points')
+        if event.order_id not in self._pending:
+            return attempt
+        if not dual and not self._claims.available(event.target):
             return attempt
         attempt_id = self._attempts.next_attempt_id(event.order_id)
         accepted = camera.advance(event, attempt_id=attempt_id, segment=attempt.order.request.segment)
+        if accepted is None:
+            if dual:
+                return attempt
+            raise ValueError('camera did not accept the instruction')
         expected = AcceptedWrite(
             event.instruction_id, event.order_id, attempt.order.request.segment,
             attempt_id, event.target,
@@ -49,6 +58,7 @@ class DispatchQueue:
         if accepted != expected:
             raise ValueError('camera returned a different accepted instruction')
         actual = self._attempts.begin(event.order_id, attempt_id, event.instruction_id, event.target)
-        self._claims.claim(event.target, event.instruction_id)
+        if not dual:
+            self._claims.claim(event.target, event.instruction_id)
         self.remove(event.order_id)
         return actual
