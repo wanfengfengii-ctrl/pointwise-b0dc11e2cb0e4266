@@ -1,0 +1,26 @@
+{
+  "shift": {"shift_id": "2026-11-23-day", "revision": "coat-R17", "point_count": 2, "spread_limit": 3},
+  "targets": ["left", "right"],
+  "events": [
+    ["request", "A", "strip-01"],
+    ["dispatch", "A", "left", "write-A"],
+    ["cancel", "A"],
+    ["notice", "write-A"],
+    ["request", "B", "strip-02"],
+    ["dispatch", "B", "left", "write-B"],
+    ["request", "C", "strip-03"],
+    ["dispatch", "C", "right", "write-C"],
+    ["write", "write-C", [5, 8], "recording/right/003"],
+    ["notice", "write-C"],
+    ["publish", "C"],
+    ["write", "write-A", [7, 9], "recording/left/001"],
+    ["dispatch", "B", "left", "write-B"],
+    ["write", "write-B", [11, 14], "recording/left/002"],
+    ["notice", "write-B"],
+    ["publish", "B"],
+    ["request", "D", "strip-04"],
+    ["dispatch", "D", "left", "write-D"],
+    ["write", "write-D", [20, 24], "recording/left/004"],
+    ["publish", "D"]
+  ]
+}
